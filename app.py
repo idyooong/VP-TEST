@@ -4,10 +4,14 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 import datetime
+
 # [설정] 구글 시트 클라이언트
 def get_gspread_client():
     creds_dict = json.loads(st.secrets["gcp_service_account"])
-    scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets']
+    scope = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
     creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     return gspread.authorize(creds)
 
@@ -37,7 +41,11 @@ def main():
     participant_view()
 
 def participant_view():
-    st.title("실험 참여 페이지")
+    # [수정된 부분] Stage 10(완료 화면) 도달 여부에 따라 제목을 다르게 렌더링합니다.
+    if st.session_state.stage < 10:
+        st.title("실험 참여 페이지")
+    else:
+        st.title("VP-tts 실험 종료 및 제출 완료") # 필요시 텍스트 수정
 
     # [Stage 0] 인구통계
     if st.session_state.stage == 0:
@@ -77,32 +85,42 @@ def participant_view():
                 st.session_state.stage += 1
                 st.rerun()
 
-    # [Stage 9] 최종 저장 (순서 보장)
-    # [Stage 9] 최종 저장
+    # [Stage 9] 최종 저장 프로세스
     elif st.session_state.stage == 9:
-        st.success("데이터 저장 중입니다...")
-        client = get_gspread_client()
-        sheet = client.open("ExperimentDB").worksheet("logs")
-        
-        # 1. 타임스탬프 추가
-        st.session_state.data['timestamp'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        # 2. 헤더 순서 정의 (시트의 A열부터 순서대로)
-        ordered_keys = ['timestamp', 'name', 'age', 'group_id']
-        videos = ["M0", "M1", "M2", "M3", "F0", "F1", "F2", "F3"]
-        for v in videos:
-            ordered_keys.extend([f"{v}_severity", f"{v}_influence", f"{v}_feedback", f"{v}_realism"])
-        
-        # 3. 데이터 추출 (키 순서 보장)
-        # 중요: st.session_state.data.keys()가 아니라 ordered_keys를 기준으로 가져와야 합니다.
-        ordered_data = [st.session_state.data.get(k, "") for k in ordered_keys]
-        
-        # 4. 시트 저장
-        sheet.append_row(ordered_data)
-        
+        # 데이터 처리 중 스피너 표시
+        with st.spinner("데이터를 서버에 기록 중입니다. 잠시만 기다려주세요..."):
+            client = get_gspread_client()
+            sheet = client.open("ExperimentDB").worksheet("logs")
+            
+            # 1. 타임스탬프 추가
+            st.session_state.data['timestamp'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            # 2. 헤더 순서 정의 (시트의 A열부터 순서대로)
+            ordered_keys = ['timestamp', 'name', 'age', 'group_id']
+            videos = ["M0", "M1", "M2", "M3", "F0", "F1", "F2", "F3"]
+            for v in videos:
+                ordered_keys.extend([f"{v}_severity", f"{v}_influence", f"{v}_feedback", f"{v}_realism"])
+            
+            # 3. 데이터 추출 및 전처리 (리스트형 방지)
+            ordered_data = []
+            for k in ordered_keys:
+                val = st.session_state.data.get(k, "N/A")
+                if isinstance(val, list):
+                    val = ", ".join(map(str, val))
+                ordered_data.append(val)
+
+            # 시트에 전송
+            sheet.append_row(ordered_data)
+            
+            # 4. 상태 변경 및 화면 새로고침
+            st.session_state.stage = 10
+            st.rerun() 
+
+    # [Stage 10] 실험 완료 화면
+    elif st.session_state.stage == 10:
         st.balloons()
-        st.session_state.stage = 10
-        st.rerun() # 저장 완료 후 페이지 상태 갱신
+        st.success("실험이 모두 완료되었습니다. 데이터가 정상적으로 저장되었습니다.")
+        st.write("참여해 주셔서 감사합니다. 창을 닫아주셔도 좋습니다.")
 
 def admin_dashboard():
     st.write("### 관리자 페이지")
