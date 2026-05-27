@@ -3,8 +3,8 @@ import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
-
-# [설정] 구글 시트 연결 (Streamlit Cloud의 Secrets 활용)
+import datetime
+# [설정] 구글 시트 클라이언트
 def get_gspread_client():
     creds_dict = json.loads(st.secrets["gcp_service_account"])
     scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets']
@@ -12,68 +12,101 @@ def get_gspread_client():
     return gspread.authorize(creds)
 
 GROUPS = {
-    "group_A": ["v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8"],
-    "group_B": ["v2", "v3", "v4", "v5", "v6", "v7", "v8", "v1"],
-    "group_C": ["v3", "v4", "v5", "v6", "v7", "v8", "v1", "v2"],
-    "group_D": ["v4", "v5", "v6", "v7", "v8", "v1", "v2", "v3"],
-    "group_E": ["v5", "v6", "v7", "v8", "v1", "v2", "v3", "v4"],
-    "group_F": ["v6", "v7", "v8", "v1", "v2", "v3", "v4", "v5"],
-    "group_G": ["v7", "v8", "v1", "v2", "v3", "v4", "v5", "v6"],
-    "group_H": ["v8", "v1", "v2", "v3", "v4", "v5", "v6", "v7"],
+    "group_A": ["M0", "M1", "M2", "M3", "F0", "F1", "F2", "F3"],
+    "group_B": ["M1", "M2", "M3", "F0", "F1", "F2", "F3", "M0"],
+    "group_C": ["M2", "M3", "F0", "F1", "F2", "F3", "M0", "M1"],
+    "group_D": ["M3", "F0", "F1", "F2", "F3", "M0", "M1", "M2"],
+    "group_E": ["F0", "F1", "F2", "F3", "M0", "M1", "M2", "M3"],
+    "group_F": ["F1", "F2", "F3", "M0", "M1", "M2", "M3", "F0"],
+    "group_G": ["F2", "F3", "M0", "M1", "M2", "M3", "F0", "F1"],
+    "group_H": ["F3", "M0", "M1", "M2", "M3", "F0", "F1", "F2"],
 }
 
 def main():
     st.set_page_config(page_title="HCI 실험", layout="centered")
     
-    # URL 파라미터로 관리자 접속 (?admin=password)
     if st.query_params.get("admin") == st.secrets["ADMIN_PASS"]:
         admin_dashboard()
-    else:
-        participant_view()
+        return
+
+    if 'stage' not in st.session_state:
+        st.session_state.stage = 0
+        st.session_state.data = {}
+        st.session_state.video_order = None
+
+    participant_view()
 
 def participant_view():
     st.title("실험 참여 페이지")
-    
-    # 1. 세션별 순서 배정 (최초 접속 시에만 수행)
-    if 'video_order' not in st.session_state:
-        client = get_gspread_client()
-        sheet = client.open("ExperimentDB").worksheet("groups")
-        data = pd.DataFrame(sheet.get_all_records())
-        
-        # 가장 인원 적은 그룹 자동 선택
-        min_group = data.loc[data['count'].idxmin()]
-        st.session_state.video_order = GROUPS[min_group['group_id']]
-        st.session_state.group_id = min_group['group_id']
-        
-        # 카운트 1 증가
-        sheet.update_cell(data.index[data['group_id'] == min_group['group_id']][0] + 2, 2, int(min_group['count']) + 1)
 
-    # 2. 영상 재생 및 설문 로직
-    idx = st.session_state.get('idx', 0)
-    if idx < len(st.session_state.video_order):
-        st.write(f"### 현재 영상: {idx+1} / 8")
-        st.video(st.session_state.video_order[idx])
+    # [Stage 0] 인구통계
+    if st.session_state.stage == 0:
+        with st.form("demography"):
+            st.session_state.data['name'] = st.text_input("참여자 이름/ID")
+            st.session_state.data['age'] = st.number_input("나이", 18, 100)
+            if st.form_submit_button("실험 시작"):
+                client = get_gspread_client()
+                sheet = client.open("ExperimentDB").worksheet("groups")
+                data = pd.DataFrame(sheet.get_all_records())
+                
+                min_group = data.loc[data['count'].idxmin()]
+                st.session_state.video_order = GROUPS[min_group['group_id']]
+                st.session_state.data['group_id'] = min_group['group_id']
+                
+                # 그룹 카운트 자동 증가
+                row_index = data.index[data['group_id'] == min_group['group_id']][0] + 2
+                sheet.update_cell(row_index, 2, int(min_group['count']) + 1)
+                
+                st.session_state.stage = 1
+                st.rerun()
+
+    # [Stage 1~8] 영상 및 설문
+    elif 1 <= st.session_state.stage <= 8:
+        idx = st.session_state.stage - 1
+        video_id = st.session_state.video_order[idx]
+        st.write(f"### {st.session_state.stage} / 8")
+        st.video(f"videos/{video_id}.mp4")
+
+        with st.form(f"survey_{idx}"):
+            st.session_state.data[f"{video_id}_severity"] = st.radio("Severity", ["None", "Mild", "Moderate", "Severe"])
+            st.session_state.data[f"{video_id}_influence"] = st.multiselect("Influence Cues", ["Text", "Eye&Head", "Face", "Motion"])
+            st.session_state.data[f"{video_id}_feedback"] = st.text_area("피드백")
+            st.session_state.data[f"{video_id}_realism"] = st.slider("Realism (1~5)", 1, 5)
+            
+            if st.form_submit_button("다음 영상으로"):
+                st.session_state.stage += 1
+                st.rerun()
+
+    # [Stage 9] 최종 저장 (순서 보장)
+    # [Stage 9] 최종 저장
+    elif st.session_state.stage == 9:
+        st.success("데이터 저장 중입니다...")
+        client = get_gspread_client()
+        sheet = client.open("ExperimentDB").worksheet("logs")
         
-        # 설문지 (간단 예시)
-        score = st.slider("영상의 몰입도를 평가해주세요", 1, 5, 3)
-        if st.button("다음 영상으로"):
-            # DB 로그 저장 (개인정보 보호 위해 ID는 랜덤 생성 등 권장)
-            st.session_state.idx += 1
-            st.rerun()
-    else:
-        st.success("모든 실험이 완료되었습니다.")
+        # 1. 타임스탬프 추가
+        st.session_state.data['timestamp'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # 2. 헤더 순서 정의 (시트의 A열부터 순서대로)
+        ordered_keys = ['timestamp', 'name', 'age', 'group_id']
+        videos = ["M0", "M1", "M2", "M3", "F0", "F1", "F2", "F3"]
+        for v in videos:
+            ordered_keys.extend([f"{v}_severity", f"{v}_influence", f"{v}_feedback", f"{v}_realism"])
+        
+        # 3. 데이터 추출 (키 순서 보장)
+        # 중요: st.session_state.data.keys()가 아니라 ordered_keys를 기준으로 가져와야 합니다.
+        ordered_data = [st.session_state.data.get(k, "") for k in ordered_keys]
+        
+        # 4. 시트 저장
+        sheet.append_row(ordered_data)
+        
+        st.balloons()
+        st.session_state.stage = 10
+        st.rerun() # 저장 완료 후 페이지 상태 갱신
 
 def admin_dashboard():
-    st.title("🛡️ 실험 관리자 대시보드")
-    client = get_gspread_client()
-    sheet = client.open("ExperimentDB").worksheet("groups")
-    df = pd.DataFrame(sheet.get_all_records())
-    st.write("### 현재 그룹별 배정 현황")
-    st.table(df)
-    
-    if st.button("참여자 결과 데이터 가져오기"):
-        logs = client.open("ExperimentDB").worksheet("logs").get_all_records()
-        st.dataframe(pd.DataFrame(logs))
+    st.write("### 관리자 페이지")
+    # ... 대시보드 로직 ...
 
 if __name__ == "__main__":
     main()
