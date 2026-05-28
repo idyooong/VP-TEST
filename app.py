@@ -28,7 +28,13 @@ GROUPS = {
 
 def main():
     st.set_page_config(page_title="HCI 실험", layout="centered")
-    
+    hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;} /* 우측 상단 햄버거 메뉴 숨김 */
+            header {visibility: hidden;} /* 상단 헤더 공간 전체(깃허브 아이콘 포함) 숨김 */
+            </style>
+            """
+    st.markdown(hide_streamlit_style, unsafe_allow_html=True)
     if st.query_params.get("admin") == st.secrets["ADMIN_PASS"]:
         admin_dashboard()
         return
