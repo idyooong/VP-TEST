@@ -32,6 +32,7 @@ def main():
             <style>
             #MainMenu {visibility: hidden;} /* 우측 상단 햄버거 메뉴 숨김 */
             header {visibility: hidden;} /* 상단 헤더 공간 전체(깃허브 아이콘 포함) 숨김 */
+            footer {visibility: hidden;} /* 하단 'Made with Streamlit' 워터마크 숨김 */
             </style>
             """
     st.markdown(hide_streamlit_style, unsafe_allow_html=True)
