@@ -29,7 +29,7 @@ GROUPS = {
 }
 
 def main():
-    st.set_page_config(page_title="HCI 실험", layout="centered")
+    st.set_page_config(page_title="HCI 실험", layout="wide") # layout="centered"
     hide_streamlit_style = """
             <style>
             #MainMenu {visibility: hidden;} /* 우측 상단 햄버거 메뉴 숨김 */
@@ -75,16 +75,30 @@ def participant_view():
                 index=None,
                 horizontal=True
             )
-            
+            st.session_state.data['clinical_years'] = st.number_input(
+                "임상 경력 년차 (※ 상담 경험 '예' 응답자만 기재)", 
+                min_value=0, # '아니요'인 사람을 위해 0을 허용
+                max_value=50,    
+                value=0,         
+                step=1
+            )
+
             st.session_state.data['certifications'] = st.text_area(
                 "보유하고 있는 상담 및 정신의학 자격증 전체 기재",
                 placeholder="정확한 명칭과 급수를 기재해 주십시오. (예: 임상심리사 1급, 청소년상담사 2급)\n해당 사항이 없을 경우 '없음'이라고 기재해 주십시오."
             )
             if st.form_submit_button("다음 단계로"):
-                if not st.session_state.data['name'] or not st.session_state.data['birth_date'] or not st.session_state.data['certifications']:
+                if not st.session_state.data['name'] or not st.session_state.data['birth_date'] or not st.session_state.data['phone'] or not st.session_state.data['gender'] or not st.session_state.data['certifications']:
                     st.warning("모든 인구통계 및 배경 정보 항목을 빠짐없이 입력해 주십시오.")
                     st.stop()
-                
+                if st.session_state.data['clinical_experience'] == "예" and st.session_state.data['clinical_years'] <= 0:
+                    st.error("⚠️ 환자 상담 경험이 '예'라고 응답하셨습니다. 아래 '임상 경력(년차)' 칸에 실제 경력을 1년 이상으로 기재해 주십시오.")
+                    st.stop() # 여기서 코드 실행을 멈추고 피험자가 수정할 때까지 대기함
+                    
+                # (옵션) 경험이 '아니요'인데 경력이 기재된 경우의 역방향 방어
+                if st.session_state.data['clinical_experience'] == "아니요" and st.session_state.data['clinical_years'] > 0:
+                    st.error("⚠️ 환자 상담 경험이 '아니요'인 경우 임상 경력은 0이어야 합니다.")
+                    st.stop()
                 # 통과 시 안내사항 페이지로 이동
                 st.session_state.stage = 1
                 st.rerun()
@@ -92,10 +106,29 @@ def participant_view():
     # [Stage 1] 실험 안내사항 (새로 추가된 페이지)
     elif st.session_state.stage == 1:
         st.subheader("📢 실험 진행 안내사항")
-        st.markdown(":blue[본 실험은 영상의 음성과 아바타의 모션(Influence Cues)을 평가하므로, 반드시 **이어폰을 착용하거나 스피커 볼륨을 켠 상태**로 진행해 주십시오.]")
-        st.markdown(":blue[원활한 구동을 위해 가급적 **PC 환경의 Chrome 브라우저** 사용을 권장합니다.]")  
-        st.markdown(":blue[실험 도중 절대로 **‘새로고침(F5)’**이나 **‘뒤로 가기’** 버튼을 누르지 마십시오.]") 
-        st.markdown(":blue[도중에 창을 닫으면 데이터가 소실되어 실험을 처음부터 다시 시작해야 합니다. **반드시 한 번에 끝까지 진행해 주십시오.**]")       
+        # st.markdown(":blue[1. 본 실험은 영상의 음성과 아바타의 모션(Influence Cues)을 평가하므로, 반드시 **이어폰을 착용한 상태**로 진행해 주십시오.]")
+        # st.markdown(":red[2. 실험 도중 절대로 **‘새로고침(F5)’**이나 **‘뒤로 가기’** 버튼을 누르지 마십시오.]") 
+        # st.markdown(":red[3. 도중에 창을 닫으면 데이터가 소실되어 실험을 처음부터 다시 시작해야 합니다. **반드시 한 번에 끝까지 진행해 주십시오.**]")   
+        st.markdown(
+            "<div style='color: #1f77b4; font-size: 16px; margin-bottom: 15px;'>"
+            "1. 본 실험은 영상의 음성과 아바타의 모션을 평가하므로, 반드시 <b>이어폰을 착용한 상태</b>로 진행해 주십시오."
+            "</div>", 
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            "<div style='color: #d62728; font-size: 16px; margin-bottom: 15px;'>"
+            "2. 실험 도중 절대로 <b>'새로고침(F5)'</b>이나 <b>'뒤로 가기'</b> 버튼을 누르지 마십시오."
+            "</div>", 
+            unsafe_allow_html=True
+        )
+
+        st.markdown(
+            "<div style='color: #d62728; font-size: 16px; margin-bottom: 25px;'>"
+            "3. 도중에 창을 닫으면 데이터가 소실되어 실험을 처음부터 다시 시작해야 합니다. <b>반드시 한 번에 끝까지 진행해 주십시오.</b>"
+            "</div>", 
+            unsafe_allow_html=True
+        )    
         st.write("위 안내사항을 모두 확인하셨다면 아래 버튼을 눌러 본 실험을 시작해 주십시오.")
         
         # 여기서 '실험 시작'을 눌러야만 비로소 구글 시트 통신 및 그룹 할당 진행
@@ -142,6 +175,7 @@ def participant_view():
             st.session_state[f"start_time_{video_id}"] = 0
             st.session_state[f"unlocked_{video_id}"] = False
 
+        video_style = "width: 100%; height: 85vh; max-width: none; object-fit: contain; margin-bottom: 25px;"
         # 1. 영상을 아직 시작하지 않은 상태
         if not st.session_state[f"play_started_{video_id}"]:
             st.info("아래 버튼을 누르면 영상이 즉시 재생됩니다.")
@@ -161,17 +195,31 @@ def participant_view():
             
             if not st.session_state[f"unlocked_{video_id}"]:
                 # 2-1. 설문 잠금 상태 (1회차 시청 중): 컨트롤 바 원천 차단, 강제 자동재생
+                # video_html = f"""
+                #     <video width="100%" autoplay>
+                #         <source src="data:video/mp4;base64,{encoded_video}" type="video/mp4">
+                #     </video>
+                # """
                 video_html = f"""
-                    <video width="100%" autoplay>
-                        <source src="data:video/mp4;base64,{encoded_video}" type="video/mp4">
-                    </video>
+                    <div style="display: flex; justify-content: center; width: 100%;">
+                        <video style="{video_style}" autoplay>
+                            <source src="data:video/mp4;base64,{encoded_video}" type="video/mp4">
+                        </video>
+                    </div>
                 """
             else:
                 # 2-2. 설문 해제 상태 (시청 완료 후): 컨트롤 바(controls) 생성 및 리플레이 허용
+                # video_html = f"""
+                #     <video width="100%" controls controlsList="nodownload noplaybackrate" disablePictureInPicture>
+                #         <source src="data:video/mp4;base64,{encoded_video}" type="video/mp4">
+                #     </video>
+                # """
                 video_html = f"""
-                    <video width="100%" controls controlsList="nodownload noplaybackrate" disablePictureInPicture>
-                        <source src="data:video/mp4;base64,{encoded_video}" type="video/mp4">
-                    </video>
+                    <div style="display: flex; justify-content: center; width: 100%;">
+                        <video style="{video_style}" controls controlsList="nodownload noplaybackrate" disablePictureInPicture>
+                            <source src="data:video/mp4;base64,{encoded_video}" type="video/mp4">
+                        </video>
+                    </div>
                 """
             st.markdown(video_html, unsafe_allow_html=True)
             # 3. 설문 폼 잠금 제어
@@ -355,7 +403,7 @@ def participant_view():
             
             st.session_state.data['timestamp'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
-            ordered_keys = ['timestamp', 'name', 'birth_date', 'phone', 'gender', 'clinical_experience', 'certifications', 'group_id']
+            ordered_keys = ['timestamp', 'name', 'birth_date', 'phone', 'gender', 'clinical_experience', 'clinical_years', 'certifications', 'group_id']
             videos = ["M0", "M1", "M2", "M3", "F0", "F1", "F2", "F3"]
             
             for v in videos:
