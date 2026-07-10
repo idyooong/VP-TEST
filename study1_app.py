@@ -434,8 +434,7 @@ def participant_view():
                         f"{video_id}_q14_humanlikeness", f"{video_id}_q15_naturalness", f"{video_id}_q16_fluency",
                         f"{video_id}_q17_realism", f"{video_id}_q18_consistency", f"{video_id}_q19_cognitive",
                         f"{video_id}_q20_seen_similar", f"{video_id}_q21_frequency", f"{video_id}_q22_common",
-                        f"{video_id}_q23_authenticity1", f"{video_id}_q24_authenticity2", 
-                        f"{video_id}_q25_reasoning1", f"{video_id}_q26_reasoning2", f"{video_id}_q27_reasoning3", f"{video_id}_q28_reasoning4", 
+                        f"{video_id}_q25_reasoning1", f"{video_id}_q26_reasoning2", f"{video_id}_q28_reasoning4", 
                         f"{video_id}_q29_learning1", f"{video_id}_q30_learning2", f"{video_id}_q31_overall_case"
                     ]
                     
