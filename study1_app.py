@@ -24,6 +24,7 @@ GROUPS = {
     "group_D": ["F0", "F1"],
     "group_E": ["F0", "F1"],
     "group_F": ["F0", "F1"],
+    "group_G": ["F0", "F1"],
     "group_H": ["F0", "F1"]
 }
 
@@ -199,7 +200,7 @@ def participant_view():
             required_time = VIDEO_LENGTHS.get(video_id, 60)
             
             st.title("[Phase 1] 진단 평가")
-            st.write(f"###  임상적 진단 및 증상 평가: {video_idx + 1} / {N}")
+            st.write(f"###  임상적 진단 및 증상 평가   {video_idx + 1} / {N}")
             # st.markdown("#### ")
             st.info("*가상 환자 영상을 시청하신 후, 이를 바탕으로 아래 질문에 답해 주십시오.*")
 
@@ -261,8 +262,7 @@ def participant_view():
                 st.session_state.data[f"{video_id}_q11_cues"] = st.multiselect(
                     "**2. 위와 같이 진단 및 심각도를 판단하는 데 '가장 큰 영향'을 미친 주요 단서(Cues)를 모두 선택해 주십시오.**", 
                     ["발화 내용 (Text/Speech Content)", "목소리 톤 및 속도 (Voice/Prosody)", 
-                     "표정 및 시선 처리 (Facial Expression & Eye movement)", "신체적 움직임 및 자세 (Body movement/Posture)", 
-                     "환자의 외양 및 옷차림 (Appearance)"]
+                     "표정 (Facial Expression)", "신체적 움직임 및 자세 (Body movement/Posture)"]
                 )
                 
                 st.session_state.data[f"{video_id}_q12_reason"] = st.text_area("**3. 위 단서를 선택한 구체적인 이유를 적어주십시오.**")
@@ -416,22 +416,17 @@ def participant_view():
                 st.subheader("가상 환자 경험 평가")
                 st.write("*이 설문지는 학생들이 가상 환자와의 경험을 평가하기 위한 것으로, 특히 임상적 추론 능력 발달에 초점을 맞추고 있습니다.*")
                 
-                likert_scales = ["1점 (전혀 동의하지 않음)", "2점 (동의하지 않음)", "3점 (보통/중립)", "4점 (동의함)", "5점 (매우 동의함)", "해당 없음"]
-                
-                st.markdown("**[환자 대면 및 면담의 진정성]**")
-                st.session_state.data[f"{video_id}_q23_authenticity1"] = st.radio("**10. 이 케이스를 진행하는 동안, 나는 실제 의사들이 현실에서 내려야 하는 것과 동일한 결정을 내려야 한다고 느꼈다.**", likert_scales, index=None, horizontal=True)
-                st.session_state.data[f"{video_id}_q24_authenticity2"] = st.radio("**11. 이 케이스를 진행하는 동안, 나는 내가 이 환자를 담당하는 주치의라고 느꼈다.**", likert_scales, index=None, horizontal=True)
+                likert_scales = ["1점 (전혀 동의하지 않음)", "2점 (동의하지 않음)", "3점 (보통/중립)", "4점 (동의함)", "5점 (매우 동의함)"]
                 
                 st.markdown("**[전문적 추론 접근]**")
-                st.session_state.data[f"{video_id}_q25_reasoning1"] = st.radio("**12. 나는 환자의 문제를 특징짓기 위해 필요한 정보(병력 등)를 수집하는 데 적극적으로 참여했다.**", likert_scales, index=None, horizontal=True)
-                st.session_state.data[f"{video_id}_q26_reasoning2"] = st.radio("**13. 나는 새로운 정보가 주어짐에 따라 환자의 문제에 대한 나의 초기 인상(가설)을 수정하는 데 적극적으로 참여했다.**", likert_scales, index=None, horizontal=True)
-                st.session_state.data[f"{video_id}_q27_reasoning3"] = st.radio("**14. 나는 의학 용어를 사용하여 환자의 문제에 대한 짧은 요약을 작성하는 데 적극적으로 참여했다.**", likert_scales, index=None, horizontal=True)
-                st.session_state.data[f"{video_id}_q28_reasoning4"] = st.radio("**15. 나는 관찰된 소견들이 나의 감별 진단들을 각각 지지하는지 혹은 반박하는지 고민하는 데 적극적으로 참여했다.**", likert_scales, index=None, horizontal=True)
+                st.session_state.data[f"{video_id}_q25_reasoning1"] = st.radio("**10. 나는 환자의 문제를 특징짓기 위해 필요한 정보(병력 등)를 수집하는 데 적극적으로 참여했다.**", likert_scales, index=None, horizontal=True)
+                st.session_state.data[f"{video_id}_q26_reasoning2"] = st.radio("**11. 나는 새로운 정보가 주어짐에 따라 환자의 문제에 대한 나의 초기 인상(가설)을 수정하는 데 적극적으로 참여했다.**", likert_scales, index=None, horizontal=True)
+                st.session_state.data[f"{video_id}_q28_reasoning4"] = st.radio("**12. 나는 관찰된 소견들이 나의 감별 진단들을 각각 지지하는지 혹은 반박하는지 고민하는 데 적극적으로 참여했다.**", likert_scales, index=None, horizontal=True)
 
                 st.markdown("**[학습 효과 및 전반적 평가]**")
-                st.session_state.data[f"{video_id}_q29_learning1"] = st.radio("**16. 이 케이스를 마친 후, 나는 동일한 증상을 호소하는 실제 환자를 만났을 때 진단을 확정하고 감별해 낼 준비가 더 잘 되었다고 느낀다.**", likert_scales, index=None, horizontal=True)
-                st.session_state.data[f"{video_id}_q30_learning2"] = st.radio("**17. 이 케이스를 마친 후, 나는 동일한 증상을 호소하는 실제 환자를 돌볼 준비가 더 잘 되었다고 느낀다.**", likert_scales, index=None, horizontal=True)
-                st.session_state.data[f"{video_id}_q31_overall_case"] = st.radio("**18. 전반적으로, 이 케이스를 수행한 것은 가치 있는 학습 경험이었다.**", likert_scales, index=None, horizontal=True)
+                st.session_state.data[f"{video_id}_q29_learning1"] = st.radio("**13. 이 케이스를 마친 후, 나는 동일한 증상을 호소하는 실제 환자를 만났을 때 진단을 확정하고 감별해 낼 준비가 더 잘 되었다고 느낀다.**", likert_scales, index=None, horizontal=True)
+                st.session_state.data[f"{video_id}_q30_learning2"] = st.radio("**14. 이 케이스를 마친 후, 나는 동일한 증상을 호소하는 실제 환자를 돌볼 준비가 더 잘 되었다고 느낀다.**", likert_scales, index=None, horizontal=True)
+                st.session_state.data[f"{video_id}_q31_overall_case"] = st.radio("**15. 전반적으로, 이 케이스를 수행한 것은 가치 있는 학습 경험이었다.**", likert_scales, index=None, horizontal=True)
 
                 if st.form_submit_button("평가 제출 및 다음 단계로"):
                     # 버그의 원인이었던 복잡한 검증 로직을 직관적이고 안전한 리스트 형태로 완벽히 교체했습니다.
@@ -461,16 +456,16 @@ def participant_view():
             
             with st.form("final_comprehensive_survey"):
                 st.session_state.data["q31_overall_exp"] = st.radio(
-                    "**19. 가상 환자를 사용한 귀하의 전반적인 경험을 1에서 10까지의 척도로 평가해 주십시오. (1점: 매우 나쁨 ~ 10점: 매우 좋음)**", 
+                    "**16. 가상 환자를 사용한 귀하의 전반적인 경험을 1에서 10까지의 척도로 평가해 주십시오. (1점: 매우 나쁨 ~ 10점: 매우 좋음)**", 
                     [str(i) for i in range(1, 11)], index=None, horizontal=True
                 )
                 st.session_state.data["q32_reuse_intent"] = st.radio(
-                    "**20. 향후 훈련 과정 중에 가상 환자를 다시 사용할 의향(관심)이 얼마나 있습니까? (1점: 전혀 관심 없음 ~ 10점: 매우 관심 있음)**", 
+                    "**17. 향후 훈련 과정 중에 가상 환자를 다시 사용할 의향(관심)이 얼마나 있습니까? (1점: 전혀 관심 없음 ~ 10점: 매우 관심 있음)**", 
                     [str(i) for i in range(1, 11)], index=None, horizontal=True
                 )
                 
-                st.session_state.data["q33_pros"] = st.text_area("**21. 임상 교육 도구로서 본 가상 환자 시스템의 가장 큰 장점은 무엇이라고 생각하십니까?**")
-                st.session_state.data["q34_cons"] = st.text_area("**22. 본 가상 환자 시스템에서 이질감을 느꼈던 부분이나, 향후 반드시 개선되어야 할 점이 있다면 자유롭게 제안해 주십시오.**")
+                st.session_state.data["q33_pros"] = st.text_area("**18. 임상 교육 도구로서 본 가상 환자 시스템의 가장 큰 장점은 무엇이라고 생각하십니까?**")
+                st.session_state.data["q34_cons"] = st.text_area("**19. 본 가상 환자 시스템에서 이질감을 느꼈던 부분이나, 향후 반드시 개선되어야 할 점이 있다면 자유롭게 제안해 주십시오.**")
                 
                 if st.form_submit_button("최종 데이터 제출 및 실험 종료"):
                     if not all([st.session_state.data.get("q31_overall_exp"), st.session_state.data.get("q32_reuse_intent"), 
