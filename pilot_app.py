@@ -245,13 +245,13 @@ def participant_view():
             if not st.session_state[f"unlocked_{video_id}_p1"]:
                 st.warning("영상이 종료된 후 아래 버튼을 눌러 평가 문항을 여십시오.")
                 if st.button("평가 문항 열기", key=f"unlock_btn_{video_id}_p1"):
-                    # if time.time() - st.session_state[f"start_time_{video_id}_p1"] < required_time:
-                    #     st.error("아직 영상 시청이 완료되지 않았습니다.")
-                    # else:
-                    #     st.session_state[f"unlocked_{video_id}_p1"] = True
-                    #     st.rerun()
-                    st.session_state[f"unlocked_{video_id}_p1"] = True
-                    st.rerun()
+                    if time.time() - st.session_state[f"start_time_{video_id}_p1"] < required_time:
+                        st.error("아직 영상 시청이 완료되지 않았습니다.")
+                    else:
+                        st.session_state[f"unlocked_{video_id}_p1"] = True
+                        st.rerun()
+                    # st.session_state[f"unlocked_{video_id}_p1"] = True
+                    # st.rerun()
                 st.stop()
 
         with st.form(f"survey_part1_t1_{video_id}"):
@@ -381,13 +381,13 @@ def participant_view():
             if not st.session_state[f"unlocked_{video_id}_p1"]:
                 st.warning("영상이 종료된 후 아래 버튼을 눌러 평가 문항을 여십시오.")
                 if st.button("평가 문항 열기", key=f"unlock_btn_{video_id}_p1"):
-                    # if time.time() - st.session_state[f"start_time_{video_id}_p1"] < required_time:
-                    #     st.error("아직 영상 시청이 완료되지 않았습니다.")
-                    # else:
-                    #     st.session_state[f"unlocked_{video_id}_p1"] = True
-                    #     st.rerun()
-                    st.session_state[f"unlocked_{video_id}_p1"] = True
-                    st.rerun()
+                    if time.time() - st.session_state[f"start_time_{video_id}_p1"] < required_time:
+                        st.error("아직 영상 시청이 완료되지 않았습니다.")
+                    else:
+                        st.session_state[f"unlocked_{video_id}_p1"] = True
+                        st.rerun()
+                    ## st.session_state[f"unlocked_{video_id}_p1"] = True
+                    ## st.rerun()
                 st.stop()
 
         with st.form(f"survey_part1_t2_{video_id}"):
