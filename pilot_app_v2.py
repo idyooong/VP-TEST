@@ -475,12 +475,11 @@ def participant_view():
         # 팩트 체크 2: Task 2의 목적에 맞게 워딩 수정 및 심각도 시각적 강조
         html_card = f"""
 <div style="background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.05); text-align: center; border-top: 6px solid #2e7d32; border-bottom: 1px solid #eee; border-left: 1px solid #eee; border-right: 1px solid #eee;">
-    <h3 style="color: #2e7d32; margin-bottom: 5px;">✅ 심각도 평가 완료</h3>
-    <p style="font-size: 15px; color: #777; margin-bottom: 30px;">수고하셨습니다. 방금 평가하신 가상 환자의 설계 기준을 공개합니다.</p>
-    
-    <p style="font-size: 14px; color: #555; margin-bottom: 5px; font-weight: bold;">가상 환자 설계 기준 (Ground Truth)</p>
-    <h3 style="color: #555; margin: 0; font-size: 20px; font-weight: normal;">질환: {gt_diag}</h3>
-    <h1 style="color: #d62728; margin: 10px 0 0 0; font-size: 40px; font-weight: 900;">심각도: {gt_sev}</h1>
+<h3 style="color: #2e7d32; margin-bottom: 5px;">✅ 심각도 평가 완료</h3>
+<p style="font-size: 15px; color: #777; margin-bottom: 30px;">수고하셨습니다. 방금 평가하신 가상 환자의 설계 기준을 공개합니다.</p>
+<p style="font-size: 14px; color: #555; margin-bottom: 5px; font-weight: bold;">가상 환자 설계 기준 (Ground Truth)</p>
+<h3 style="color: #555; margin: 0; font-size: 20px; font-weight: normal;">질환: {gt_diag}</h3>
+<h1 style="color: #d62728; margin: 10px 0 0 0; font-size: 40px; font-weight: 900;">심각도: {gt_sev}</h1>
 </div>
 """
         st.markdown(html_card, unsafe_allow_html=True)
@@ -707,13 +706,22 @@ def render_system_evaluation_form(video_id, task_num, v_idx):
                 st.error("좋았던 점과 부족했던 점을 모두 작성해 주십시오.")
                 st.stop()
 
-            if st.session_state.v_idx < len(st.session_state.task1_videos) - 1:
-                st.session_state.v_idx += 1
-                st.session_state.step = 'task1_phase1' # 다음 영상의 진단 평가로 복귀
-            else:
-                st.session_state.v_idx = 0
-                st.session_state.step = 'task2_instructions' # 4개 영상 모두 완료 시 Task 2로 완전히 이동
-            st.rerun()
+            if task_num == 1:
+                    if st.session_state.v_idx < len(st.session_state.task1_videos) - 1:
+                        st.session_state.v_idx += 1
+                        st.session_state.step = 'task1_phase1' # 다음 Task 1 영상으로 복귀
+                    else:
+                        st.session_state.v_idx = 0
+                        st.session_state.step = 'task2_instructions' # Task 1 종료 시 Task 2 안내로 이동
+                
+            elif task_num == 2:
+                if st.session_state.v_idx < len(st.session_state.task2_videos) - 1:
+                    st.session_state.v_idx += 1
+                    st.session_state.step = 'task2_phase1' # 다음 Task 2 영상으로 복귀
+                else:
+                    # Task 2까지 모두 종료된 경우의 처리
+                    st.session_state.v_idx = 0
+                    st.session_state.step = 'final' # 최종 완료 페이지로 이동
 
 if __name__ == "__main__":
     main()
