@@ -43,7 +43,9 @@ VIDEO_LENGTHS = {
     "None_T2": 210, "Mild": 230, "Moderate": 250, "Severe": 208,
     "None_T1": 236, "OCD": 263, "GAD": 235, "MDD": 189
 }
-
+# 실험 전체 및 타임 로그 관리를 위한 독립 세션 초기화
+if 'time_logs' not in st.session_state:
+    st.session_state.time_logs = {}
 def main():
     st.set_page_config(page_title="HCI 실험", layout="wide")
     hide_streamlit_style = """
