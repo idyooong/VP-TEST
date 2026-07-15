@@ -589,7 +589,7 @@ def participant_view():
             st.session_state.data["q32_cons"] = st.text_area("**4. 본 가상 환자 시스템에서 이질감을 느꼈던 부분이나 개선되어야 할 점이 있다면 제안해 주십시오.**")
             st.session_state.data["q33_diff_diagnosis"] = st.text_area("**5. 어떤 질환의 감별이 가장 어려웠습니까?**")
             if st.form_submit_button("최종 데이터 제출 및 실험 종료"):
-                if not all([st.session_state.data.get("q29_overall_exp"), st.session_state.data.get("q30_reuse_intent"), st.session_state.data.get("q31_pros"), st.session_state.data.get("q32_cons")、 st.session_state.data.get("q33_diff_diagnosis")]):
+                if not all([st.session_state.data.get("q29_overall_exp"), st.session_state.data.get("q30_reuse_intent"), st.session_state.data.get("q31_pros"), st.session_state.data.get("q32_cons"), st.session_state.data.get("q33_diff_diagnosis")]):
                     st.error("모든 종합 평가 문항을 작성해 주십시오.")
                     st.stop()
                 st.session_state.step = 'save'
