@@ -608,7 +608,7 @@ def participant_view():
             
             # 팩트 체크: 두 개의 독립된 워크시트 객체 호출
             sheet_data = db.worksheet("logs")
-            sheet_time = db.worksheet("time_logs") 
+            #sheet_time = db.worksheet("time_logs") 
             
             # 공통 식별자(Primary Key) 생성
             current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -667,26 +667,26 @@ def participant_view():
             # ==========================================
             # [파이프라인 2] 타임 로그 전용 데이터 (time_logs 시트용)
             # ==========================================
-            ordered_keys_time = ['timestamp', 'name', 'Experiment_Total_Time', 'Task1_Total_Time', 'Task2_Total_Time']
+            # ordered_keys_time = ['timestamp', 'name', 'Experiment_Total_Time', 'Task1_Total_Time', 'Task2_Total_Time']
             
-            for v in all_videos:
-                t_prefix = "Task2" if v in st.session_state.task2_videos else "Task1"
-                ordered_keys_time.extend([
-                    f"{t_prefix}_{v}_Video_Time",
-                    f"{t_prefix}_{v}_Phase1_Survey_Time",
-                    f"{t_prefix}_{v}_Phase2_Time"
-                ])
+            # for v in all_videos:
+            #     t_prefix = "Task2" if v in st.session_state.task2_videos else "Task1"
+            #     ordered_keys_time.extend([
+            #         f"{t_prefix}_{v}_Video_Time",
+            #         f"{t_prefix}_{v}_Phase1_Survey_Time",
+            #         f"{t_prefix}_{v}_Phase2_Time"
+            #     ])
                 
-            ordered_time_row = []
-            for k in ordered_keys_time:
-                val = st.session_state.time_logs.get(k, 0.0) 
-                ordered_time_row.append(val)
+            # ordered_time_row = []
+            # for k in ordered_keys_time:
+            #     val = st.session_state.time_logs.get(k, 0.0) 
+            #     ordered_time_row.append(val)
 
             # ==========================================
             # [API 전송] 두 개의 독립된 시트에 각각 append_row 실행
             # ==========================================
             sheet_data.append_row(ordered_data_row)
-            sheet_time.append_row(ordered_time_row)
+#            sheet_time.append_row(ordered_time_row)
             
             st.session_state.step = 'done'
             st.rerun()
