@@ -8,7 +8,6 @@ import base64
 import time
 import random
 import streamlit.components.v1 as components
-from io import BytesIO
 
 # [설정] 구글 시트 클라이언트
 def get_gspread_client():
@@ -23,15 +22,15 @@ def get_gspread_client():
 # [수정됨] 엑셀 스키마 보호를 위해 ID 분리 (None_T2: 정상 진단용 / None_T1: 심각도 없음용)
 GROUPS = {
     "group_A": {
-        "task1": ["OCD", "MDD", "None_T1", "GAD"],  # 질환 종류 맞추기용 4개
-        "task2": ["Moderate", "Mild", "Severe", "None_T2"] # 우울증 심각도 평가용 4개
+        "task1": ["OCD", "MDD", "None_T2", "GAD"],  # 질환 종류 맞추기용 4개
+        "task2": ["Moderate", "Mild", "Severe", "None_T1"] # 우울증 심각도 평가용 4개
     }
 }
 
 # [수정됨] 분리된 ID 반영
 GROUND_TRUTH = {
-    "None_T1": {"diagnosis": "질환 없음", "severity": "N/A"},
-    "None_T2": {"diagnosis": "주요우울장애(MDD)", "severity": "없음(None)"},
+    "None_T1": {"diagnosis": "주요우울장애(MDD)", "severity": "없음(None)"},
+    "None_T2": {"diagnosis": "질환 없음", "severity": "N/A"},
     "Mild": {"diagnosis": "주요우울장애(MDD)", "severity": "경도(Mild)"},
     "Moderate": {"diagnosis": "주요우울장애(MDD)", "severity": "중등도(Moderate)"},
     "Severe": {"diagnosis": "주요우울장애(MDD)", "severity": "중증(Severe)"},
@@ -44,13 +43,7 @@ VIDEO_LENGTHS = {
     "None_T2": 210, "Mild": 230, "Moderate": 250, "Severe": 208,
     "None_T1": 236, "OCD": 263, "GAD": 235, "MDD": 189
 }
-# 실험 전체 및 타임 로그 관리를 위한 독립 세션 초기화
-if 'time_logs' not in st.session_state:
-    st.session_state.time_logs = {}
 
-# 1. 전체 실험 시작 시간 기록 (demography 페이지 로드 시점)
-if 'global_start_time' not in st.session_state:
-    st.session_state.global_start_time = time.time()
 def main():
     st.set_page_config(page_title="HCI 실험", layout="wide")
     hide_streamlit_style = """
@@ -73,20 +66,20 @@ def main():
     participant_view()
 
 def participant_view():
-    # # [수정됨] 화면이 렌더링될 때마다 강제로 스크롤을 최상단으로 끌어올리는 JS 주입
-    # js = """
-    # <script>
-    #     var body = window.parent.document.querySelector(".main");
-    #     if (body) {
-    #         body.scrollTop = 0;
-    #     }
-    #     window.parent.scrollTo(0, 0);
-    # </script>
-    # """
-    # components.html(js, height=0)
+    # [수정됨] 화면이 렌더링될 때마다 강제로 스크롤을 최상단으로 끌어올리는 JS 주입
+    js = """
+    <script>
+        var body = window.parent.document.querySelector(".main");
+        if (body) {
+            body.scrollTop = 0;
+        }
+        window.parent.scrollTo(0, 0);
+    </script>
+    """
+    components.html(js, height=0)
 
     step = st.session_state.step
-    
+
     # ---------------------------------------------------------
     # [Step] 기본 인적 사항
     # ---------------------------------------------------------
@@ -259,7 +252,6 @@ def participant_view():
         with col2:
             # key 부여로 버튼 충돌 방지
             if st.button("Task 1 시작하기", use_container_width=True, key="btn_start_t1"):
-                st.session_state.t1_start_time = time.time()
                 st.session_state.step = 'task1_phase1'
                 st.rerun()
     # ---------------------------------------------------------
@@ -285,24 +277,21 @@ def participant_view():
                 st.rerun()
             st.stop()
         else:
+            # None_T1, None_T2 영상의 실제 파일 이름은 둘 다 None.mp4 임을 감안하여 매핑 처리
             st.video(f"videos/{video_id}.mp4")
 
             if not st.session_state[f"unlocked_{video_id}_p1"]:
                 st.warning("영상이 종료된 후 아래 버튼을 눌러 평가 문항을 여십시오.")
                 if st.button("평가 문항 열기", key=f"unlock_btn_{video_id}_p1"):
-                    if time.time() - st.session_state[f"start_time_{video_id}_p1"] < required_time:
-                        st.error("아직 영상 시청이 완료되지 않았습니다.")
-                    else:
-                        st.session_state[f"unlocked_{video_id}_p1"] = True
-                    # 팩트 체크: 영상 시청에 소요된 총 시간 기록
-                        st.session_state.time_logs[f"Task1_{video_id}_Video_Time"] = round(elapsed_time, 2)
-                        # 팩트 체크: 폼이 열리는 순간을 Phase 1 설문 시작 시간으로 강제 기록
-                        st.session_state[f"survey_start_{video_id}_p1"] = time.time()
-                        st.rerun()
-                    # st.session_state[f"unlocked_{video_id}_p1"] = True
-                    # st.rerun()
+                    # if time.time() - st.session_state[f"start_time_{video_id}_p1"] < required_time:
+                    #     st.error("아직 영상 시청이 완료되지 않았습니다.")
+                    # else:
+                    #     st.session_state[f"unlocked_{video_id}_p1"] = True
+                    #     st.rerun()
+                    st.session_state[f"unlocked_{video_id}_p1"] = True
+                    st.rerun()
                 st.stop()
-        
+
         with st.form(f"survey_part1_t1_{video_id}"):
             st.markdown("**1. 이 환자의 가장 가능성 높은 질환(진단명)은 무엇이라고 생각하십니까?**")
             st.session_state.data[f"{video_id}_q10_category"] = st.selectbox(
@@ -314,6 +303,7 @@ def participant_view():
                                 index=None
                             )
             st.session_state.data[f"{video_id}_q10_detail"] = st.text_input("소분류 (세부 질환명) 기재 (※ 대분류 [해당 없음] 선택 시, ‘없음’ 기재)")
+
             st.session_state.data[f"{video_id}_q12_cues"] = st.multiselect("**2. 위와 같이 진단을 판단하는 데 '가장 큰 영향'을 미친 주요 단서(Cues)를 모두 선택해 주십시오. (중복 선택 가능)**", ["발화 내용", "목소리 톤 및 속도", "표정 및 시선 처리", "신체적 움직임 및 자세", "환자의 외양 및 옷차림"])
             st.session_state.data[f"{video_id}_q13_reason"] = st.text_area("**3. 위 단서를 선택한 구체적인 이유를 적어주십시오.**")
 
@@ -321,10 +311,11 @@ def participant_view():
                 req = [f"{video_id}_q10_category", f"{video_id}_q10_detail", f"{video_id}_q12_cues", f"{video_id}_q13_reason"]
                 if not all(st.session_state.data.get(k) for k in req): st.error("모든 평가 문항에 응답해 주십시오."); st.stop()
                 
-                # 팩트 체크: 순수 폼 작성 시간만 계산 (제출 시간 - 폼 열린 시간)
-                p1_survey_duration = time.time() - st.session_state[f"survey_start_{video_id}_p1"]
-                st.session_state.time_logs[f"Task1_{video_id}_Phase1_Survey_Time"] = round(p1_survey_duration, 2)
-                            
+                # if st.session_state.v_idx < len(st.session_state.task1_videos) - 1:
+                #     st.session_state.v_idx += 1
+                # else:
+                #     st.session_state.step = 'task1_intermission'
+                #     st.session_state.v_idx = 0
                 st.session_state.step = 'task1_intermission'
                 st.rerun()
 
@@ -372,10 +363,6 @@ def participant_view():
     elif step == 'task1_phase2':
         video_id = st.session_state.task1_videos[st.session_state.v_idx]
         gt_diag = GROUND_TRUTH.get(video_id, {}).get("diagnosis", "미상")
-        
-        timer_key_p2 = f"start_time_p2_{video_id}"
-        if timer_key_p2 not in st.session_state:
-            st.session_state[timer_key_p2] = time.time() # Phase 2 화면 진입 시점 기록
 
         st.title("[Task 1] 시스템 품질 및 경험 평가")
         # st.write(f"### 대상 환자 {st.session_state.v_idx + 1} / {len(st.session_state.task1_videos)}")
@@ -416,7 +403,6 @@ def participant_view():
         col1, col2, col3 = st.columns([1, 1.5, 1])
         with col2:
             if st.button("Task 2 시작하기", use_container_width=True, key="btn_start_t2"):
-                st.session_state.t1_start_time = time.time() # Task 1 타이머 시작
                 st.session_state.step = 'task2_phase1'
                 st.rerun()
     # ---------------------------------------------------------
@@ -447,15 +433,13 @@ def participant_view():
             if not st.session_state[f"unlocked_{video_id}_p1"]:
                 st.warning("영상이 종료된 후 아래 버튼을 눌러 평가 문항을 여십시오.")
                 if st.button("평가 문항 열기", key=f"unlock_btn_{video_id}_p1"):
-                    if time.time() - st.session_state[f"start_time_{video_id}_p1"] < required_time:
-                        st.error("아직 영상 시청이 완료되지 않았습니다.")
-                    else:
-                        st.session_state[f"unlocked_{video_id}_p1"] = True
-                        st.session_state.time_logs[f"Task2_{video_id}_Video_Time"] = round(elapsed_time, 2)
-                        st.session_state[f"survey_start_{video_id}_p1"] = time.time()
-                        st.rerun()
-                    # st.session_state[f"unlocked_{video_id}_p1"] = True
-                    # st.rerun()
+                    # if time.time() - st.session_state[f"start_time_{video_id}_p1"] < required_time:
+                    #     st.error("아직 영상 시청이 완료되지 않았습니다.")
+                    # else:
+                    #     st.session_state[f"unlocked_{video_id}_p1"] = True
+                    #     st.rerun()
+                    st.session_state[f"unlocked_{video_id}_p1"] = True
+                    st.rerun()
                 st.stop()
 
         with st.form(f"survey_part1_t2_{video_id}"):
@@ -469,8 +453,6 @@ def participant_view():
                 req = [f"{video_id}_q11_severity", f"{video_id}_q12_cues", f"{video_id}_q13_reason"]
                 if not all(st.session_state.data.get(k) for k in req): st.error("모든 평가 문항에 응답해 주십시오."); st.stop()
                 
-                p1_survey_duration = time.time() - st.session_state[f"survey_start_{video_id}_p1"]
-                st.session_state.time_logs[f"Task2_{video_id}_Phase1_Survey_Time"] = round(p1_survey_duration, 2)
                 st.session_state.step = 'task2_intermission'
                 st.rerun()
 
@@ -555,34 +537,27 @@ def participant_view():
     elif step == 'save':
         with st.spinner("데이터를 서버에 기록 중입니다. 잠시만 기다려주세요..."):
             client = get_gspread_client()
-            db = client.open("ExperimentDB")
+            sheet = client.open("ExperimentDB").worksheet("logs")
             
-            sheet_data = db.worksheet("logs")
-            sheet_time = db.worksheet("time_logs")
-
-            current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            st.session_state.data['timestamp'] = current_time
-            st.session_state.time_logs['timestamp'] = current_time
-            st.session_state.time_logs['name'] = st.session_state.data.get('name', 'Unknown')
-
-            # 1. 전체 실험 총 소요 시간 최종 계산 및 time_logs에 삽입
-            st.session_state.time_logs["Experiment_Total_Time"] = round(time.time() - st.session_state.global_start_time, 2)
+            st.session_state.data['timestamp'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
             st.session_state.data['task1_order'] = ", ".join(st.session_state.task1_videos)
             st.session_state.data['task2_order'] = ", ".join(st.session_state.task2_videos)
             ordered_keys = ['timestamp', 'name', 'gender', 'birth_date', 'major', 'degree', 'clinical_experience', 'clinical_years', 'certifications', 'communication_difficulty', 'simulation_experience', 'group_id', 'task1_order', 'task2_order']
+            
             # [수정됨] 175열 구글시트 구조와 완벽히 일치하는 배열 순서
             all_videos = ["None_T1", "OCD", "MDD", "GAD", "None_T2", "Mild", "Moderate", "Severe"]
             for v in all_videos:
+                # Task 2 (심각도) 영상에 대해서는 진단명(MDD) 강제 할당
                 if v in st.session_state.task2_videos:
                     st.session_state.data[f"{v}_q10_category"] = "우울장애 (사전제공)"
                     st.session_state.data[f"{v}_q10_detail"] = "MDD (사전제공)"
-                else: 
+                    ordered_keys.extend([f"{v}_q10_category", f"{v}_q10_detail", f"{v}_q11_severity"])
+                else: # Task 1 (진단) 영상은 심각도 N/A 처리
                     st.session_state.data[f"{v}_q11_severity"] = "N/A" 
-                
-                # 영상별 설문 키 추가
+                    ordered_keys.extend([f"{v}_q10_category", f"{v}_q10_detail", f"{v}_q11_severity"])
+
                 ordered_keys.extend([
-                    f"{v}_q10_category", f"{v}_q10_detail", f"{v}_q11_severity",
                     f"{v}_q12_cues", f"{v}_q13_reason",
                     f"{v}_q14_humanlikeness", f"{v}_q15_naturalness", f"{v}_q16_fluency",
                     f"{v}_q17_realism", f"{v}_q18_consistency", f"{v}_q19_cognitive",
@@ -593,34 +568,14 @@ def participant_view():
                 ])
                 
             ordered_keys.extend(["q29_overall_exp", "q30_reuse_intent", "q31_pros", "q32_cons"])
-
-            ordered_data_row = []
+            
+            ordered_data = []
             for k in ordered_keys:
                 val = st.session_state.data.get(k, "N/A")
                 if isinstance(val, list): val = ", ".join(map(str, val))
-                ordered_data_row.append(val)
+                ordered_data.append(val)
 
-            # ==========================================
-            # [파이프라인 2] 타임 로그 전용 데이터 (time_logs 시트용)
-            # ==========================================
-            ordered_keys_time = ['timestamp', 'name', 'Experiment_Total_Time', 'Task1_Total_Time', 'Task2_Total_Time']
-            
-            for v in all_videos:
-                t_prefix = "Task2" if v in st.session_state.task2_videos else "Task1"
-                ordered_keys_time.extend([
-                    f"{t_prefix}_{v}_Video_Time",
-                    f"{t_prefix}_{v}_Phase1_Survey_Time",
-                    f"{t_prefix}_{v}_Phase2_Time"
-                ])
-                
-            ordered_time_row = []
-            for k in ordered_keys_time:
-                val = st.session_state.time_logs.get(k, 0.0) # 누락된 시간은 기본값 0.0 처리
-                ordered_time_row.append(val)
-
-            sheet_data.append_row(ordered_data_row)
-            sheet_time.append_row(ordered_time_row)
-
+            sheet.append_row(ordered_data)
             st.session_state.step = 'done'
             st.rerun()
 
@@ -630,10 +585,6 @@ def participant_view():
         st.write("안전하게 창을 닫아주셔도 좋습니다.")
 
 def render_system_evaluation_form(video_id, task_num, v_idx):
-    timer_key_p2 = f"start_time_p2_t{task_num}_{video_id}"
-    if timer_key_p2 not in st.session_state:
-        st.session_state[timer_key_p2] = time.time()
-
     with st.form(f"survey_part2_{video_id}_{v_idx}"):
         st.write("*아래의 모든 평가 기준은 **실제 정답값**을 바탕으로 합니다.*")
         st.subheader("가상 환자의 시각/언어적 자연스러움 평가")
@@ -749,18 +700,12 @@ def render_system_evaluation_form(video_id, task_num, v_idx):
             if not st.session_state.data.get(f"{video_id}_feedback_pros") or not st.session_state.data.get(f"{video_id}_feedback_cons"):
                 st.error("좋았던 점과 부족했던 점을 모두 작성해 주십시오.")
                 st.stop()
-            p2_duration = time.time() - st.session_state[timer_key_p2]
-            st.session_state.time_logs[f"Task{task_num}_{video_id}_Phase2_Time"] = round(p2_duration, 2)
 
             if task_num == 1:
                     if st.session_state.v_idx < len(st.session_state.task1_videos) - 1:
                         st.session_state.v_idx += 1
                         st.session_state.step = 'task1_phase1' # 다음 Task 1 영상으로 복귀
                     else:
-                        if 't1_start_time' in st.session_state:
-                            t1_duration = time.time() - st.session_state.t1_start_time
-                            st.session_state.time_logs["Task1_Total_Time"] = round(t1_duration, 2)
-                            
                         st.session_state.v_idx = 0
                         st.session_state.step = 'task2_instructions' # Task 1 종료 시 Task 2 안내로 이동
                     st.rerun()
@@ -770,9 +715,6 @@ def render_system_evaluation_form(video_id, task_num, v_idx):
                     st.session_state.v_idx += 1
                     st.session_state.step = 'task2_phase1' # 다음 Task 2 영상으로 복귀
                 else:
-                    if 't2_start_time' in st.session_state:
-                        t2_duration = time.time() - st.session_state.t2_start_time
-                        st.session_state.time_logs["Task2_Total_Time"] = round(t2_duration, 2)
                     # Task 2까지 모두 종료된 경우의 처리
                     st.session_state.v_idx = 0
                     st.session_state.step = 'final' # 최종 완료 페이지로 이동
