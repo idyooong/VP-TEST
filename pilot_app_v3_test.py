@@ -587,9 +587,9 @@ def participant_view():
             st.session_state.data["q30_reuse_intent"] = st.radio("**2. 향후 훈련 과정 중에 가상 환자를 다시 사용할 의향이 얼마나 있습니까? (1점은 '전혀 관심이 없음', 10점은 '매우 관심이 있음')**", [str(i) for i in range(1, 11)], index=None, horizontal=True)
             st.session_state.data["q31_pros"] = st.text_area("**3. 임상 교육 도구로서 본 가상 환자 시스템의 가장 큰 장점은 무엇이라고 생각하십니까?**")
             st.session_state.data["q32_cons"] = st.text_area("**4. 본 가상 환자 시스템에서 이질감을 느꼈던 부분이나 개선되어야 할 점이 있다면 제안해 주십시오.**")
-            
+            st.session_state.data["q33_diff_diagnosis"] = st.text_area("**5. 어떤 질환의 감별이 가장 어려웠습니까?**")
             if st.form_submit_button("최종 데이터 제출 및 실험 종료"):
-                if not all([st.session_state.data.get("q29_overall_exp"), st.session_state.data.get("q30_reuse_intent"), st.session_state.data.get("q31_pros"), st.session_state.data.get("q32_cons")]):
+                if not all([st.session_state.data.get("q29_overall_exp"), st.session_state.data.get("q30_reuse_intent"), st.session_state.data.get("q31_pros"), st.session_state.data.get("q32_cons")、 st.session_state.data.get("q33_diff_diagnosis")]):
                     st.error("모든 종합 평가 문항을 작성해 주십시오.")
                     st.stop()
                 st.session_state.step = 'save'
@@ -613,11 +613,11 @@ def participant_view():
             # 공통 식별자(Primary Key) 생성
             current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             st.session_state.data['timestamp'] = current_time
-            st.session_state.time_logs['timestamp'] = current_time
-            st.session_state.time_logs['name'] = st.session_state.data.get('name', 'Unknown')
+            # st.session_state.time_logs['timestamp'] = current_time
+            # st.session_state.time_logs['name'] = st.session_state.data.get('name', 'Unknown')
             
             # 전체 실험 총 소요 시간 계산
-            st.session_state.time_logs["Experiment_Total_Time"] = round(time.time() - st.session_state.global_start_time, 2)
+            # st.session_state.time_logs["Experiment_Total_Time"] = round(time.time() - st.session_state.global_start_time, 2)
             
             st.session_state.data['task1_order'] = ", ".join(st.session_state.task1_videos)
             st.session_state.data['task2_order'] = ", ".join(st.session_state.task2_videos)
@@ -656,7 +656,7 @@ def participant_view():
                     f"{v}_feedback_pros", f"{v}_feedback_cons"
                 ])
                 
-            ordered_keys_data.extend(["q29_overall_exp", "q30_reuse_intent", "q31_pros", "q32_cons"])
+            ordered_keys_data.extend(["q29_overall_exp", "q30_reuse_intent", "q31_pros", "q32_cons", "q33_diff_diagnosis"])
             
             ordered_data_row = []
             for k in ordered_keys_data:
