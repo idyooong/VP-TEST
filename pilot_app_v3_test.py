@@ -189,7 +189,7 @@ def participant_view():
             with col4: st.session_state.data['cue_rank_4'] = st.selectbox("4순위", cues_options, index=None)
             with col5: st.session_state.data['cue_rank_5'] = st.selectbox("5순위", cues_options, index=None)
 
-            st.session_state.data['simulation_experience'] = st.text_input("**9. 귀하는 과거에 임상 실습이나 면담 훈련을 위해 다음과 같은 ‘환자 시뮬레이션 훈련 또는 실제 임상 참관’을 경험해본 적이 있습니까? (해당하는 것 모두 선택)**")
+            st.markdown("**9. 귀하는 과거에 임상 실습이나 면담 훈련을 위해 다음과 같은 '환자 시뮬레이션 훈련 또는 실제 임상 참관'을 경험해 본 적이 있습니까? (해당하는 것 모두 선택)**")
             cb_none = st.checkbox("경험 없음")
             cb_shadowing = st.checkbox("지도감독자(Supervisor) 또는 선배의 실제 진료 참관")
             cb_peer = st.checkbox("동료 및 선후배 간의 역할극 (Peer Role-playing)")
