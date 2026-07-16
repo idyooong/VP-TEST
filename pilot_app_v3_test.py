@@ -585,7 +585,7 @@ def participant_view():
             """)
 
             # 질문 텍스트는 위에서 마크다운으로 처리했으므로, text_area의 label은 숨김(collapsed) 처리
-            st.session_state.data["q33_diff_diagnosis"] = st.text_area("**  어떤 질환의 감별이 가장 어려웠습니까?**")
+            st.session_state.data["q33_diff_diagnosis"] = st.text_area("어떤 질환의 감별이 가장 어려웠습니까?")
 
             st.session_state.data["q31_pros"] = st.text_area("**4. 임상 교육 도구로서 본 가상 환자 시스템의 가장 큰 장점은 무엇이라고 생각하십니까?**")
             st.session_state.data["q32_cons"] = st.text_area("**5. 본 가상 환자 시스템에서 이질감을 느꼈던 부분이나 개선되어야 할 점이 있다면 제안해 주십시오.**")
