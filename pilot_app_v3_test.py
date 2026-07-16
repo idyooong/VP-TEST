@@ -325,8 +325,9 @@ def participant_view():
                 st.session_state.data[f"{video_id}_cue_rank_4"] = st.selectbox("4순위", cues_options, index=None, key=f"{video_id}_r4")
             with col5: 
                 st.session_state.data[f"{video_id}_cue_rank_5"] = st.selectbox("5순위", cues_options, index=None, key=f"{video_id}_r5")
-            st.session_state.data[f"{video_id}_q13_reason"] = st.text_area("**3. 위 단서를 선택한 구체적인 이유를 적어주십시오.**")
+            st.write("**3. 2번 문항에서 선택한 단서들을 바탕으로, 위 환자를 해당 질환으로 진단한 구체적인 이유를 적어주십시오**")
 
+            st.session_state.data[f"{video_id}_q13_reason"] = st.text_area("판단 근거")
             if st.form_submit_button("평가 제출"):
                 req = [f"{video_id}_q10_category", f"{video_id}_q10_detail", f"{video_id}_q12_cues", f"{video_id}_q13_reason"]
                 # if not all(st.session_state.data.get(k) for k in req): st.error("모든 평가 문항에 응답해 주십시오."); st.stop()
@@ -466,8 +467,12 @@ def participant_view():
 
         with st.form(f"survey_part1_t2_{video_id}"):
             st.write("**[안내] 이 가상 환자의 질환은 '주요우울장애(Major Depressive Disorder)'입니다. 해당 질환을 바탕으로 환자의 증상 심각도를 평가해 주십시오.**")
-            
-            st.session_state.data[f"{video_id}_q11_severity"] = st.radio("**1. 이 환자의 전반적인 증상 심각도(Severity)는 어느 정도라고 평가하십니까?**", ["None (증상 없음)", "Mild (경도)", "Moderate (중등도)", "Severe (중증)"], index=None)
+            st.markdown("**1. 이 환자의 전반적인 증상 심각도(Severity)는 어느 정도라고 평가하십니까?**")
+            st.session_state.data[f"{video_id}_q11_severity"] = st.selectbox(
+                                "심각도 선택",
+                                ["None (증상 없음)", "Mild (경도)", "Moderate (중등도)", "Severe (중증)"],
+                                index=None
+                            )
             st.write("**2. 아래 항목을 위 환자의 심각도를 판단하는 데 영향을 미친 순서대로 1순위부터 5순위까지 표시해 주십시오. (1 = 가장 큰 영향을 미친 항목, 5 = 가장 작은 영향을 미친 항목)**")
 
             cues_options = [
@@ -492,7 +497,10 @@ def participant_view():
                 st.session_state.data[f"{video_id}_cue_rank_4"] = st.selectbox("4순위", cues_options, index=None, key=f"{video_id}_r4")
             with col5: 
                 st.session_state.data[f"{video_id}_cue_rank_5"] = st.selectbox("5순위", cues_options, index=None, key=f"{video_id}_r5")
-            st.session_state.data[f"{video_id}_q13_reason"] = st.text_area("**3. 위 단서를 선택한 구체적인 이유를 적어주십시오.**")
+            
+            st.write("**3. 2번 문항에서 선택한 단서들을 바탕으로, 위 환자를 해당 질환으로 진단한 구체적인 이유를 적어주십시오**")
+
+            st.session_state.data[f"{video_id}_q13_reason"] = st.text_area("판단 근거")
 
             if st.form_submit_button("평가 제출"):
                 req = [f"{video_id}_q11_severity", f"{video_id}_q12_cues", f"{video_id}_q13_reason"]
@@ -564,49 +572,30 @@ def participant_view():
         st.info("모든 영상 평가가 완료되었습니다. 마지막으로 본 가상 환자 시스템 전체에 대한 종합적인 의견을 여쭙습니다.")
         
         with st.form("final_comprehensive_survey"):
+            
             st.session_state.data["q29_overall_exp"] = st.radio("**1. 가상 환자를 사용한 귀하의 전반적인 경험을 1에서 10까지의 척도로 평가해 주십시오. (1점은 '매우 나쁨', 10점은 '매우 좋음)**", [str(i) for i in range(1, 11)], index=None, horizontal=True)
             st.session_state.data["q30_reuse_intent"] = st.radio("**2. 향후 훈련 과정 중에 가상 환자를 다시 사용할 의향이 얼마나 있습니까? (1점은 '전혀 관심이 없음', 10점은 '매우 관심이 있음')**", [str(i) for i in range(1, 11)], index=None, horizontal=True)
-            st.session_state.data["q31_pros"] = st.text_area("**3. 임상 교육 도구로서 본 가상 환자 시스템의 가장 큰 장점은 무엇이라고 생각하십니까?**")
-            st.session_state.data["q32_cons"] = st.text_area("**4. 본 가상 환자 시스템에서 이질감을 느꼈던 부분이나 개선되어야 할 점이 있다면 제안해 주십시오.**")
-            st.session_state.data["q33_diff_diagnosis"] = st.text_area("**5. 어떤 질환의 감별이 가장 어려웠습니까? (해당하는 항목에 체크해 주십시오)**")
+            
+            st.markdown("""
+            **3. 앞선 실험에서 평가했던 아래의 질환 목록을 참고하여, 진단이 가장 어렵거나 감별하기 헷갈렸던 질환은 무엇이며 그 이유는 무엇인지 자세히 서술해 주십시오.**
 
-            # Task 1과 Task 2를 나란히 배치하기 위해 컬럼 분할
-            col1, col2 = st.columns(2)
+            > **[참고: 실험 진행 질환 목록]**
+            > * **Task 1** : 주요우울장애(Severe), 주요우울장애(Moderate), 주요우울장애(Mild), 질환 없음
+            > * **Task 2** : 강박장애, 범불안장애, 주요우울장애, 질환 없음
+            """)
 
-            with col1:
-                st.markdown("**[Task 1]**")
-                # 오류 1 해결: key 값 명시적 부여
-                t1_mild = st.checkbox("주요우울장애(Mild)", key="final_t1_mild")
-                t1_moderate = st.checkbox("주요우울장애(Moderate)", key="final_t1_mod")
-                t1_severe = st.checkbox("주요우울장애(Severe)", key="final_t1_sev")
-                t1_none = st.checkbox("없었음", key="final_t1_none")
+            # 질문 텍스트는 위에서 마크다운으로 처리했으므로, text_area의 label은 숨김(collapsed) 처리
+            st.session_state.data["q33_diff_diagnosis"] = st.text_area("**  어떤 질환의 감별이 가장 어려웠습니까?**")
 
-            with col2:
-                st.markdown("**[Task 2]**")
-                # 오류 1 해결: key 값 명시적 부여
-                t2_mdd = st.checkbox("주요우울장애", key="final_t2_mdd")
-                t2_gad = st.checkbox("범불안장애", key="final_t2_gad")
-                t2_ocd = st.checkbox("강박장애", key="final_t2_ocd")
-                t2_none = st.checkbox("없었음", key="final_t2_none")
-
+            st.session_state.data["q31_pros"] = st.text_area("**4. 임상 교육 도구로서 본 가상 환자 시스템의 가장 큰 장점은 무엇이라고 생각하십니까?**")
+            st.session_state.data["q32_cons"] = st.text_area("**5. 본 가상 환자 시스템에서 이질감을 느꼈던 부분이나 개선되어야 할 점이 있다면 제안해 주십시오.**")
+            
             # 폼 제출 버튼
             submitted = st.form_submit_button("최종 데이터 제출 및 실험 종료")
 
             # 오류 3 해결: 제출 버튼 클릭 시점에만 데이터 할당 수행
             if submitted:
-                st.session_state.data["task1_diff_diagnosis"] = [
-                    disorder for disorder, checked in zip(
-                        ["주요우울장애(Mild)", "주요우울장애(Moderate)", "주요우울장애(Severe)", "없었음"], 
-                        [t1_mild, t1_moderate, t1_severe, t1_none]
-                    ) if checked
-                ]
-
-                st.session_state.data["task2_diff_diagnosis"] = [
-                    disorder for disorder, checked in zip(
-                        ["주요우울장애", "범불안장애", "강박장애", "없었음"], 
-                        [t2_mdd, t2_gad, t2_ocd, t2_none]
-                    ) if checked
-                ]
+        
                 st.session_state.step = 'save'
                 st.rerun()
 
@@ -802,8 +791,8 @@ def render_system_evaluation_form(video_id, task_num, v_idx):
         st.session_state.data[f"{video_id}_q25_reasoning4"] = st.radio("**10. 나는 이 상담 영상을 시청하는 동안, 환자에게서 얻은 임상적 단서가 어떤 질환을 뒷받침하고 어떤 질환의 가능성을 낮추는지 지속적으로 생각하였다.**", likert_scales, index=None, horizontal=True)
 
         st.markdown("**[상담의 학습 효과]**")
-        st.session_state.data[f"{video_id}_q26_learning1"] = st.radio("**11. 나는 이 상담 영상을 시청한 후, 유사한 증상을 보이는 실제 환자의 질환을 진단하고 다른 질환과 감별하는 데 도움이 될 것이라고 생각한다.**", likert_scales, index=None, horizontal=True)
-        st.session_state.data[f"{video_id}_q27_learning2"] = st.radio("**12. 나는 이 상담 영상을 시청한 후, 유사한 증상을 보이는 실제 환자를 면담하고 평가하는데 도움이 될 것이라고 생각한다.**", likert_scales, index=None, horizontal=True)
+        st.session_state.data[f"{video_id}_q26_learning1"] = st.radio("**11. 이 상담 영상을 통해 훈련할 경우, 유사한 증상을 보이는 실제 환자의 질환을 진단하고 다른 질환과 감별하는 데 도움이 될 것이다.**", likert_scales, index=None, horizontal=True)
+        st.session_state.data[f"{video_id}_q27_learning2"] = st.radio("**12. 이 상담 영상을 통해 훈련할 경우, 유사한 증상을 보이는 실제 환자를 면담하고 평가하는데 도움이 될 것이다.**", likert_scales, index=None, horizontal=True)
         st.markdown("**[전반적인 평가]**")
         st.session_state.data[f"{video_id}_q28_overall_case"] = st.radio("**13. 전반적으로, 이 상담 영상을 활용한 학습은 유익한 학습 경험이었다.**", likert_scales, index=None, horizontal=True)
 
